@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "sudoku.h"
 #include <string.h>
+#include <omp.h>
 
 //returns a 2D array from a file containing the Sudoku in space separated format (empty cells are 0)
 int ** readInput(char *filename){
