@@ -2,43 +2,75 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "sudoku.h"
 
-bool checkPartial(int** input, int row, int column){
+int* getPossibleValues(int** input, int row, int column){
 	int i;
-	int val = input[row][column];
-	for(i = 0; i<SIZE; i++){
-		if((input[row][i] == val) && (i != column)) return false;
-		if((input[i][column] == val) && (i != row)) return false;
+	int* possible_vals = malloc(SIZE*sizeof(int));
+	// memset(possible_vals, 1, SIZE*sizeof(int));
+	for(i = 0; i < SIZE;i++){
+		possible_vals[i] = 1;
+	}
+	for(i = 0; i < SIZE; i++){
+		if(input[row][i] != 0) possible_vals[input[row][i] - 1] = 0;
+		if(input[i][column] != 0) possible_vals[input[i][column] - 1] = 0;
 	}
 	int j;
 	int mini_row = row/MINIGRIDSIZE;
 	int mini_column = column/MINIGRIDSIZE;
 	for(i = 0; i < MINIGRIDSIZE; i++){
 		for(j = 0; j < MINIGRIDSIZE; j++){
-			if((input[mini_row + i][mini_column + j] == val) && ((mini_row + i != row) || (mini_column + j != column))) return false;
+			if(input[mini_row + i][mini_column + j] != 0) possible_vals[input[mini_row+i][mini_column+j] - 1] = 0;
 		}
 	}
-	return true;
+	return possible_vals;
 }
 
-bool* getPossibleValues(int** input, int row, int column){
-	int val;
-	bool* possible_vals = malloc(SIZE*sizeof(bool));
-	for(val = 1; val < SIZE; val++){
-		input[row][column] = val;
-		if(checkPartial(input, row, column)) possible_vals[val] = true;
+void printGrid(int** outputGrid){
+	int i,j;
+	for (i=0;i<SIZE;i++){
+		for (j=0;j<SIZE;j++)
+			printf("%d ",outputGrid[i][j]);
+		printf("\n");
 	}
 }
 
-
-int** solvesudoku(int** input){
+int** solveSudoku(int** input){
 	int r_num;
 	int c_num;
-	for(r_num = 0; r_num < SIZE, r_num++){
+	for(r_num = 0; r_num < SIZE; r_num++){
 		for(c_num = 0; c_num < SIZE; c_num++){
 			if(input[r_num][c_num] == 0){
-				bool* possible_vals = getPossibleValues(input, row, column);
+				int* possible_vals = getPossibleValues(input, r_num, c_num);
+				int i;
+				int** output;
+				printf("possible values at %d,%d : ", r_num, c_num);
+				for(i = 0; i< SIZE; i++){
+					if(possible_vals[i])printf("%d, ",i+1);
+				}
+				printf("\n");
+				for(i = 0; i<SIZE; i++){
+					if(possible_vals[i]){
+						input[r_num][c_num] = i+1;
+						printf("---------------------------------: %d, %d\n", r_num, c_num);
+						printGrid(input);
+						printf("---------------------------------\n");
+						output = solveSudoku(input);
+						if(isValid(input, output)){
+							return output;
+						}
+						else{
+							input[r_num][c_num] = 0;
+						}
+					}
+				}
+				printf("return ---------------------------------: %d, %d\n", r_num, c_num);
+						printGrid(input);
+						printf("---------------------------------\n");
+				return input;
 			}
 		}
 	}
+	exit(0);
+	return input;
 }
