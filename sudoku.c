@@ -11,18 +11,29 @@ int* getPossibleValues(int** input, int row, int column){
 	for(i = 0; i < SIZE;i++){
 		possible_vals[i] = 1;
 	}
+	printf("discarded: ");
 	for(i = 0; i < SIZE; i++){
-		if(input[row][i] != 0) possible_vals[input[row][i] - 1] = 0;
-		if(input[i][column] != 0) possible_vals[input[i][column] - 1] = 0;
-	}
-	int j;
-	int mini_row = row/MINIGRIDSIZE;
-	int mini_column = column/MINIGRIDSIZE;
-	for(i = 0; i < MINIGRIDSIZE; i++){
-		for(j = 0; j < MINIGRIDSIZE; j++){
-			if(input[mini_row + i][mini_column + j] != 0) possible_vals[input[mini_row+i][mini_column+j] - 1] = 0;
+		if(input[row][i] != 0){
+			printf("%d, ", input[row][i]);
+			possible_vals[input[row][i] - 1] = 0;
+		}
+		if(input[i][column] != 0){
+			printf("%d, ", input[i][column]);
+			possible_vals[input[i][column] - 1] = 0;
 		}
 	}
+	int j;
+	int mini_row = (row/MINIGRIDSIZE)*MINIGRIDSIZE;
+	int mini_column = (column/MINIGRIDSIZE)*MINIGRIDSIZE;
+	for(i = 0; i < MINIGRIDSIZE; i++){
+		for(j = 0; j < MINIGRIDSIZE; j++){
+			if(input[mini_row + i][mini_column + j] != 0){
+				printf("%d, ", input[mini_row + i][mini_column + j]);
+				possible_vals[input[mini_row+i][mini_column+j] - 1] = 0;
+			}
+		}
+	}
+	printf("\n");
 	return possible_vals;
 }
 
@@ -44,9 +55,9 @@ int** solveSudoku(int** input){
 				int* possible_vals = getPossibleValues(input, r_num, c_num);
 				int i;
 				int** output;
-				printf("possible values at %d,%d : ", r_num, c_num);
 				for(i = 0; i< SIZE; i++){
 					if(possible_vals[i])printf("%d, ",i+1);
+					else printf("%d, ", possible_vals[i]);
 				}
 				printf("\n");
 				for(i = 0; i<SIZE; i++){
@@ -71,6 +82,6 @@ int** solveSudoku(int** input){
 			}
 		}
 	}
-	exit(0);
+	// exit(0);
 	return input;
 }
