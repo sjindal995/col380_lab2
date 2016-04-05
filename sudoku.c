@@ -203,6 +203,25 @@ int isComplete(int** input){
 	return 1;
 }
 
+void freePossibleGrid(struct possibleVals** possibleGrid){
+	int r_num, c_num, i;
+	for(r_num = 0; r_num < SIZE; r_num++){
+		for(c_num = 0; c_num < SIZE; c_num++){
+			free(possibleGrid[r_num][c_num].vals);
+		}
+		free(possibleGrid[r_num]);
+	}
+	free(possibleGrid);
+}
+
+void freeGrid(int** grid){
+	int r_num, c_num, i;
+	for(r_num = 0; r_num < SIZE; r_num++){
+		free(grid[r_num]);
+	}
+	free(grid);
+}
+
 int** solveSudoku1(int** input){
 	if(isComplete(input)) return input;
 	int r_num;
@@ -220,13 +239,13 @@ int** solveSudoku1(int** input){
 	}
 	r = elimination(input1, possibleGrid);
 	if(r < 0){
-		free(possibleGrid);
-		free(input1);
+		freePossibleGrid(possibleGrid);
+		freeGrid(input1);
 		return input;
 	}
 	else{
 		if(isComplete(input1)){
-			free(possibleGrid);
+			freePossibleGrid(possibleGrid);
 			return input1;
 		}
 		// for(r_num = 0; r_num < SIZE; r_num++){
@@ -256,7 +275,7 @@ int** solveSudoku1(int** input){
 					// printf("---------------------------------\n");
 					output = solveSudoku1(input1);
 					if(isValid(input, output)){
-						free(possibleGrid);
+						freePossibleGrid(possibleGrid);
 						return output;
 					}
 					else{
@@ -266,13 +285,15 @@ int** solveSudoku1(int** input){
 				// printf("return ---------------------------------: %d, %d\n", r_num, c_num);
 				// 		printGrid(input1);
 				// 		printf("---------------------------------\n");
-				free(possibleGrid);
+				freePossibleGrid(possibleGrid);
+				freeGrid(input1);
 				return input;
 			}
 		}
 	}
 	// exit(0);
-	free(possibleGrid);
+	freePossibleGrid(possibleGrid);
+	freeGrid(input1);
 	return input;
 }
 
