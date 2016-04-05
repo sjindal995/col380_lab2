@@ -10,6 +10,52 @@ struct possibleVals{
 	int size;
 };
 
+struct stack{
+	int*** list;
+	int size;
+	int capacity;
+};
+
+void initStack(struct stack s){
+	s.size = 0;
+	s.capacity = 1;
+	s.list = malloc(s.capacity*sizeof(int**));
+}
+
+void push(struct stack s, int** val){
+	if(s.size < s.capacity){
+		s.list[s.size] = val;
+		s.size++;
+	}
+	else{
+		int*** new_list = malloc(2*s.capacity*sizeof(int**));
+		int i;
+		for(i = 0; i<s.size; i++){
+			new_list[i] = s.list[i];
+		}
+		s.list = new_list;
+		s.list[s.size] = val;
+		s.size++;
+		s.capacity *= 2;
+	}
+}
+
+int isEmptyStack(struct stack s){
+	return (s.size == 0);
+}
+
+int** pop(struct stack s){
+	if(isEmptyStack(s)) return NULL;
+	else{
+		s.size--;
+		return s.list[s.size];
+	}
+}
+
+int** top(struct stack s){
+	return s.list[s.size];
+}
+
 struct possibleVals getPossibleValues(int** input, int row, int column){
 	int i;
 	int* bool_vals = malloc(SIZE*sizeof(int));
@@ -222,7 +268,7 @@ void freeGrid(int** grid){
 	free(grid);
 }
 
-int** solveSudoku1(int** input){
+int** solveSudokuRec(int** input){
 	if(isComplete(input)) return input;
 	int r_num;
 	int c_num;
@@ -273,9 +319,10 @@ int** solveSudoku1(int** input){
 					// printf("---------------------------------: %d, %d\n", r_num, c_num);
 					// printGrid(input1);
 					// printf("---------------------------------\n");
-					output = solveSudoku1(input1);
+					output = solveSudokuRec(input1);
 					if(isValid(input, output)){
 						freePossibleGrid(possibleGrid);
+						// freeGrid(input1);
 						return output;
 					}
 					else{
@@ -297,9 +344,19 @@ int** solveSudoku1(int** input){
 	return input;
 }
 
+int** solveSudokuIt(int** input){
+	struct stack st;
+	initStack(st);
+	push(st, input);
+	while(!isEmptyStack(st)){
+		int** curr = pop(st);
+
+	}
+}
+
 int** solveSudoku(int** input){
 	// struct possibleVals** possibleGrid = getPossibleGrid(input);
 	// int r;
 	// if((r = elimination(input, possibleGrid)) < 0) return input;
-	return solveSudoku1(input);
+	return solveSudokuRec(input);
 }
