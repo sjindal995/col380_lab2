@@ -50,6 +50,7 @@ struct possibleVals getPossibleValues(int** input, int row, int column){
 			possible_vals.size++;
 		}
 	}
+	free(bool_vals);
 	return possible_vals;
 }
 
@@ -198,6 +199,7 @@ int** solveSudoku1(int** input){
 					// printf("---------------------------------\n");
 					output = solveSudoku1(input);
 					if(isValid(input, output)){
+						free(possible_vals.vals);
 						return output;
 					}
 					else{
@@ -207,6 +209,7 @@ int** solveSudoku1(int** input){
 				// printf("return ---------------------------------: %d, %d\n", r_num, c_num);
 				// 		printGrid(input);
 				// 		printf("---------------------------------\n");
+				free(possible_vals.vals);
 				return input;
 			}
 		}
