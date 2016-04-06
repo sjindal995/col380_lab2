@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "sudoku.h"
 
-
+extern int thread_count;
 struct possibleVals{
 	int* vals;
 	int size;
@@ -16,44 +16,92 @@ struct stack{
 	int capacity;
 };
 
-void initStack(struct stack s){
-	s.size = 0;
-	s.capacity = 1;
-	s.list = malloc(s.capacity*sizeof(int**));
+void initStack(struct stack* s){
+	s->size = 0;
+	s->capacity = 1;
+	s->list = malloc(s->capacity*sizeof(int**));
 }
 
-void push(struct stack s, int** val){
-	if(s.size < s.capacity){
-		s.list[s.size] = val;
-		s.size++;
+void push(struct stack* s, int** val){
+	if(s->size < s->capacity){
+		s->list[s->size] = val;
+		s->size++;
 	}
 	else{
-		int*** new_list = malloc(2*s.capacity*sizeof(int**));
+		int*** new_list = malloc(2*s->capacity*sizeof(int**));
 		int i;
-		for(i = 0; i<s.size; i++){
-			new_list[i] = s.list[i];
+		for(i = 0; i<s->size; i++){
+			new_list[i] = s->list[i];
 		}
-		s.list = new_list;
-		s.list[s.size] = val;
-		s.size++;
-		s.capacity *= 2;
+		s->list = new_list;
+		s->list[s->size] = val;
+		s->size++;
+		s->capacity *= 2;
 	}
 }
 
-int isEmptyStack(struct stack s){
-	return (s.size == 0);
+int isEmptyStack(struct stack* s){
+	return (s->size == 0);
 }
 
-int** pop(struct stack s){
+int** pop(struct stack* s){
 	if(isEmptyStack(s)) return NULL;
 	else{
-		s.size--;
-		return s.list[s.size];
+		s->size--;
+		return s->list[s->size];
 	}
 }
 
-int** top(struct stack s){
-	return s.list[s.size];
+int** top(struct stack* s){
+	return s->list[s->size - 1];
+}
+
+struct queue{
+	int*** list;
+	int start;
+	int size;
+	int capacity;
+};
+
+void initQueue(struct queue* q){
+	q->start = 0;
+	q->size = 0;
+	q->capacity = 1;
+	q->list = malloc(q->capacity*sizeof(int**));
+}
+
+void pushQueue(struct queue* q, int** val){
+	if(q->size < q->capacity){
+		q->list[(q->start + q->size)%q->capacity] = val;
+		q->size++;
+	}
+	else{
+		int*** new_list = malloc(2*q->capacity*sizeof(int**));
+		int i;
+		new_list[0] = val;
+		for(i = 0; i<q->size; i++){
+			new_list[i+1] = q->list[(i + q->start)%q->capacity];
+		}
+		q->start = 0;
+		q->list = new_list;
+		q->size++;
+		q->capacity *= 2;
+	}
+}
+
+int isEmptyQueue(struct queue* q){
+	return (q->size == 0);
+}
+
+int** popQueue(struct queue* q){
+	if(isEmptyQueue(q)) return NULL;
+	int** output = q->list[q->start];
+	q->start = (q->start + 1)%q->capacity;
+	return output;
+}
+
+int** frontQueue(struct queue* q){
+	return (q->list[q->start]);	
 }
 
 struct possibleVals getPossibleValues(int** input, int row, int column){
@@ -238,6 +286,7 @@ int elimination(int** input){
 						// printf("\nupdated possible grid : %d, %d : val: %d\n", r_num, c_num, input[r_num][c_num]);
 						// printPossibleGrid(possibleGrid);
 					}
+					free(possible_vals.vals);
 				}
 			}
 		}
@@ -431,24 +480,83 @@ int** solveSudokuRec(int** input){
 	return input;
 }
 
-int** solveSudokuIt(int** input){
-	struct stack st;
-	initStack(st);
-	push(st, input);
-	while(!isEmptyStack(st)){
-		int** curr = pop(st);
-		int r_num, c_num;
-		for(r_num = 0; r_num < SIZE; r_num++){
-			for(c_num = 0; c_num < SIZE; c_num++){
+// int** solveSudokuIt(int** input){
+// 	struct stack st;
+// 	initStack(st);
+// 	push(st, input);
+// 	while(!isEmptyStack(st)){
+// 		int** curr = pop(st);
+// 		int r_num, c_num;
+// 		for(r_num = 0; r_num < SIZE; r_num++){
+// 			for(c_num = 0; c_num < SIZE; c_num++){
 				
-			}
+// 			}
+// 		}
+// 	}
+// }
+
+int** makeCopy(int** src){
+	int r_num, c_num;
+	int** dst = malloc(SIZE*sizeof(int*));
+	for(r_num = 0; r_num < SIZE; r_num++){
+		dst[r_num] = malloc(SIZE*sizeof(int));
+		for(c_num = 0; c_num < SIZE; c_num++){
+			dst[r_num][c_num] = src[r_num][c_num];
 		}
 	}
+	return dst;
 }
 
 int** solveSudoku(int** input){
 	// struct possibleVals** possibleGrid = getPossibleGrid(input);
 	// int r;
 	// if((r = elimination(input, possibleGrid)) < 0) return input;
-	return solveSudokuRec(input);
+	struct queue* q = malloc(sizeof(struct queue));
+	initQueue(q);
+	// printf("--------------------begin: %d, %d\n", q->start, q->size);
+	pushQueue(q,makeCopy(input));
+	int r_num, c_num, i;
+	// thread_count=1;
+	while(q->size < thread_count && !isEmptyQueue(q)){
+		int** curr = popQueue(q);
+		int break1=0;
+		for(r_num = 0; r_num < SIZE; r_num++){
+			for(c_num = 0; c_num < SIZE; c_num++){
+				if(curr[r_num][c_num] == 0){
+					struct possibleVals possible_vals = getPossibleValues(curr, r_num, c_num);
+					for(i = 0; i < possible_vals.size; i++){
+						int** curr_child = makeCopy(curr);
+						curr_child[r_num][c_num] = possible_vals.vals[i];
+						pushQueue(q, curr_child);
+					}
+					break1 = 1;
+					// free(possible_vals.vals);
+					break;
+				}
+			}
+			if(break1) break;
+		}
+		// freeGrid(curr);
+	}
+	// printf("nthreads: %d\n", thread_count);
+	int** output;
+	omp_set_num_threads(thread_count);
+	#pragma omp parallel for 
+		for(i = 0; i < q->size; i++){
+			printf("q->size: %d, thread_id: %d\n", q->size, omp_get_thread_num());
+			// printf("--------------------begin: %d, %d\n", q->start, q->size);
+			// printGrid(q->list[(i + q->start)%q->capacity]);
+			// printf("--------------------end:\n");
+			int** temp;
+			if(!output){
+				printGrid(q->list[(i + q->start)%q->capacity]);
+				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity]);
+				#pragma omp critical
+					if(isValid(input, temp)) output = temp;
+			}
+		}
+	if(!output) output = input;
+	return output;
+	// while(st.size < )
+	// return solveSudokuRec(input);
 }
