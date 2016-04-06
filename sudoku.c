@@ -543,13 +543,12 @@ int** solveSudoku(int** input){
 	omp_set_num_threads(thread_count);
 	#pragma omp parallel for 
 		for(i = 0; i < q->size; i++){
-			printf("q->size: %d, thread_id: %d\n", q->size, omp_get_thread_num());
+			// printf("q->size: %d, thread_id: %d\n", q->size, omp_get_thread_num());
 			// printf("--------------------begin: %d, %d\n", q->start, q->size);
 			// printGrid(q->list[(i + q->start)%q->capacity]);
 			// printf("--------------------end:\n");
 			int** temp;
 			if(!output){
-				printGrid(q->list[(i + q->start)%q->capacity]);
 				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity]);
 				#pragma omp critical
 					if(isValid(input, temp)) output = temp;
