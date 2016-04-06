@@ -294,78 +294,96 @@ int elimination(int** input){
 	return 0;
 }
 
-int loneRanger(int** input, struct possibleVals** possibleGrid){
-	int r, c,i, j, mini_row, mini_column, k, noset, set;
-	for(r=0; r<SIZE; r++){
-		for(c=0; c<SIZE; c++){
-			if(input[r][c]==0){
-				if(possibleGrid[r][c].size==0){
-					//incorrect input
-					return -1;
-				}
-				else if (possibleGrid[r][c].size==1){
-					input[r][c]=possibleGrid[r][c].vals[0];
-					if(updatePossibleGrid(input,r,c,possibleGrid)<0){
+int loneRanger(int** input){
+	int r, c,i, j, mini_row, mini_column, k, noset, set,changed=1;
+	struct possibleVals pv1,pv2;
+	int *bool_vals;
+	while(changed){
+		changed=0;
+		for(r=0; r<SIZE; r++){
+			for(c=0; c<SIZE; c++){
+				if(input[r][c]==0){
+					pv1 = getPossibleValues(input,r,c);
+					if(pv1.size==0){
+						//incorrect input
 						return -1;
 					}
-				}
-				else if (possibleGrid[r][c].size>1){
-					int* bool_vals = calloc(SIZE,sizeof(int));
-					// memset(bool_vals, 0, SIZE*sizeof(int));
-					for (i=0; i<possibleGrid[r][c].size; i++){
-						bool_vals[possibleGrid[r][c].vals[i]-1]=1;
+					else if (pv1.size==1){
+						input[r][c]=pv1.vals[0];
+						changed=1;
+						// if(updatePossibleGrid(input,r,c,possibleGrid)<0){
+							// return -1;
+						// }
 					}
-					for(i=0;i<SIZE;i++){
-						//row
-						if(i!=c){
-							if(input[r][i]==0){
-								if(possibleGrid[r][i].size>0){
-									for(j=0; j<possibleGrid[r][i].size;j++){
-										bool_vals[possibleGrid[r][i].vals[j]-1]=0;
-									}
-								}
-							}	
+					else if (pv1.size>1){
+						bool_vals = calloc(SIZE,sizeof(int));
+						// memset(bool_vals, 0, SIZE*sizeof(int));
+						for (i=0; i<pv1.size; i++){
+							bool_vals[pv1.vals[i]-1]=1;
 						}
-						//column
-						if(i!=r){
-							if(input[i][c]==0){
-								if(possibleGrid[i][c].size>0){
-									for(j=0;j<possibleGrid[i][c].size;j++){
-										bool_vals[possibleGrid[i][c].vals[j]-1]=0;
-									}
-								}
-							}
-						}
-					}
-					mini_row = (r/MINIGRIDSIZE)*MINIGRIDSIZE;
-					mini_column = (c/MINIGRIDSIZE)*MINIGRIDSIZE;
-					for(i=0; i<MINIGRIDSIZE; i++){
-						for(j=0; j<MINIGRIDSIZE; j++){
-							if(i!=r && j!=c){
-								if(input[mini_row+i][mini_column+j]!=0){
-									if(possibleGrid[mini_row+i][mini_column+j].size>0){
-										for(k=0;k<possibleGrid[mini_row+i][mini_column+j].size; k++){
-											bool_vals[possibleGrid[mini_row+i][mini_column+j].vals[k]-1]=0;
+						for(i=0;i<SIZE;i++){
+							//row
+							if(i!=c){
+								if(input[r][i]==0){
+									pv2 = getPossibleValues(input,r,i);
+									if(pv2.size>0){
+										for(j=0; j<pv2.size;j++){
+											bool_vals[pv2.vals[j]-1]=0;
 										}
 									}
+									free(pv2.vals);
+									// free(pv2);
+								}	
+							}
+							//column
+							if(i!=r){
+								if(input[i][c]==0){
+									pv2 = getPossibleValues(input,i, c);
+									if(pv2.size>0){
+										for(j=0;j<pv2.size;j++){
+											bool_vals[pv2.vals[j]-1]=0;
+										}
+									}
+									free(pv2.vals);
+									// free(pv2);
 								}
 							}
 						}
-					}
-					noset=0;
-					for(i=0; i<SIZE; i++){
-						if(bool_vals[i]==1){
-							noset++;
-							set = i+1;
+						mini_row = (r/MINIGRIDSIZE)*MINIGRIDSIZE;
+						mini_column = (c/MINIGRIDSIZE)*MINIGRIDSIZE;
+						for(i=0; i<MINIGRIDSIZE; i++){
+							for(j=0; j<MINIGRIDSIZE; j++){
+								if(i!=r && j!=c){
+									if(input[mini_row+i][mini_column+j]!=0){
+										pv2 = getPossibleValues(input, mini_row+i, mini_column+j);
+										if(pv2.size>0){
+											for(k=0;k<pv2.size; k++){
+												bool_vals[pv2.vals[k]-1]=0;
+											}
+										}
+										free(pv2.vals);
+										// free(pv2);
+
+									}
+								}
+							}
 						}
-					}
-					if(noset==1){
-						input[r][c]=set;
-						possibleGrid[r][c].vals[0]=set;
-						possibleGrid[r][c].size=1;
-					}
-					if(updatePossibleGrid(input, r, c, possibleGrid)<0){
-						return -1;
+						noset=0;
+						for(i=0; i<SIZE; i++){
+							if(bool_vals[i]==1){
+								noset++;
+								set = i+1;
+							}
+						}
+						if(noset==1){
+							input[r][c]=set;
+							changed=1;
+							// possibleGrid[r][c].vals[0]=set;
+							// possibleGrid[r][c].size=1;
+						}
+						// if(updatePossibleGrid(input, r, c, possibleGrid)<0){
+						// 	return -1;
+						// }
 					}
 				}
 			}
@@ -419,7 +437,7 @@ int** solveSudokuRec(int** input){
 		}
 	}
 	r = elimination(input1);
-	// r = loneRanger(input1, possibleGrid);
+	// r = loneRanger(input1);
 	if(r < 0){
 		// freePossibleGrid(possibleGrid);
 		freeGrid(input1);
