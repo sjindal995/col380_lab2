@@ -213,25 +213,31 @@ int updatePossibleGrid(int** input, int r_num, int c_num, struct possibleVals** 
 	return 0;
 }
 
-int elimination(int** input, struct possibleVals** possibleGrid){
+int elimination(int** input){
 	int r_num, c_num, r;
-	for(r_num = 0; r_num < SIZE; r_num++){
-		for(c_num = 0; c_num < SIZE; c_num++){
-			if(input[r_num][c_num] == 0){
-				if(possibleGrid[r_num][c_num].size == 0){
-					// printf("4\n");
-					return -1;
-				}
-				else if(possibleGrid[r_num][c_num].size == 1){
-					input[r_num][c_num] = possibleGrid[r_num][c_num].vals[0];
-					// printf("\npossible grid : %d, %d : val: %d\n", r_num, c_num, input[r_num][c_num]);
-					// printPossibleGrid(possibleGrid);
-					if((r = updatePossibleGrid(input, r_num, c_num, possibleGrid)) < 0){
-						// printf("5\n");
+	int changed = 1;
+	while(changed){
+		changed = 0;
+		for(r_num = 0; r_num < SIZE; r_num++){
+			for(c_num = 0; c_num < SIZE; c_num++){
+				if(input[r_num][c_num] == 0){
+					struct possibleVals possible_vals = getPossibleValues(input, r_num, c_num);
+					if(possible_vals.size == 0){
+						// printf("4\n");
 						return -1;
 					}
-					// printf("\nupdated possible grid : %d, %d : val: %d\n", r_num, c_num, input[r_num][c_num]);
-					// printPossibleGrid(possibleGrid);
+					else if(possible_vals.size == 1){
+						changed = 1;
+						input[r_num][c_num] = possible_vals.vals[0];
+						// printf("\npossible grid : %d, %d : val: %d\n", r_num, c_num, input[r_num][c_num]);
+						// printPossibleGrid(possibleGrid);
+						// if((r = updatePossibleGrid(input, r_num, c_num, possibleGrid)) < 0){
+						// 	// printf("5\n");
+						// 	return -1;
+						// }
+						// printf("\nupdated possible grid : %d, %d : val: %d\n", r_num, c_num, input[r_num][c_num]);
+						// printPossibleGrid(possibleGrid);
+					}
 				}
 			}
 		}
@@ -272,7 +278,7 @@ int** solveSudokuRec(int** input){
 	if(isComplete(input)) return input;
 	int r_num;
 	int c_num;
-	struct possibleVals** possibleGrid = getPossibleGrid(input);
+	// struct possibleVals** possibleGrid = getPossibleGrid(input);
 	// printf("\npossible grid\n");
 	// printPossibleGrid(possibleGrid);
 	int r;
@@ -283,15 +289,16 @@ int** solveSudokuRec(int** input){
 			input1[r_num][c_num] = input[r_num][c_num];
 		}
 	}
-	r = elimination(input1, possibleGrid);
+	// r = elimination(input1, possibleGrid);
+	r = elimination(input1);
 	if(r < 0){
-		freePossibleGrid(possibleGrid);
+		// freePossibleGrid(possibleGrid);
 		freeGrid(input1);
 		return input;
 	}
 	else{
 		if(isComplete(input1)){
-			freePossibleGrid(possibleGrid);
+			// freePossibleGrid(possibleGrid);
 			return input1;
 		}
 		// for(r_num = 0; r_num < SIZE; r_num++){
@@ -306,7 +313,7 @@ int** solveSudokuRec(int** input){
 	for(r_num = 0; r_num < SIZE; r_num++){
 		for(c_num = 0; c_num < SIZE; c_num++){
 			if(input1[r_num][c_num] == 0){
-				// struct possibleVals possible_vals = getPossibleValues(input1, r_num, c_num);
+				struct possibleVals possible_vals = getPossibleValues(input1, r_num, c_num);
 				int i;
 				int** output;
 				// for(i = 0; i< SIZE; i++){
@@ -314,14 +321,14 @@ int** solveSudokuRec(int** input){
 				// 	else printf("%d, ", possible_vals[i]);
 				// }
 				// printf("\n");
-				for(i = 0; i < possibleGrid[r_num][c_num].size; i++){
-					input1[r_num][c_num] = possibleGrid[r_num][c_num].vals[i];
+				for(i = 0; i < possible_vals.size; i++){
+					input1[r_num][c_num] = possible_vals.vals[i];
 					// printf("---------------------------------: %d, %d\n", r_num, c_num);
 					// printGrid(input1);
 					// printf("---------------------------------\n");
 					output = solveSudokuRec(input1);
 					if(isValid(input, output)){
-						freePossibleGrid(possibleGrid);
+						// freePossibleGrid(possibleGrid);
 						// freeGrid(input1);
 						return output;
 					}
@@ -332,14 +339,14 @@ int** solveSudokuRec(int** input){
 				// printf("return ---------------------------------: %d, %d\n", r_num, c_num);
 				// 		printGrid(input1);
 				// 		printf("---------------------------------\n");
-				freePossibleGrid(possibleGrid);
+				// freePossibleGrid(possibleGrid);
 				freeGrid(input1);
 				return input;
 			}
 		}
 	}
 	// exit(0);
-	freePossibleGrid(possibleGrid);
+	// freePossibleGrid(possibleGrid);
 	freeGrid(input1);
 	return input;
 }
@@ -350,7 +357,12 @@ int** solveSudokuIt(int** input){
 	push(st, input);
 	while(!isEmptyStack(st)){
 		int** curr = pop(st);
-
+		int r_num, c_num;
+		for(r_num = 0; r_num < SIZE; r_num++){
+			for(c_num = 0; c_num < SIZE; c_num++){
+				
+			}
+		}
 	}
 }
 
