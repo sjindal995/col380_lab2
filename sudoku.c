@@ -78,14 +78,14 @@ void pushQueue(struct queue* q, int** val){
 	else{
 		int*** new_list = malloc(2*q->capacity*sizeof(int**));
 		int i;
-		new_list[0] = val;
 		for(i = 0; i<q->size; i++){
-			new_list[i+1] = q->list[(i + q->start)%q->capacity];
+			new_list[i] = q->list[(i + q->start)%q->capacity];
 		}
 		q->start = 0;
 		q->list = new_list;
-		q->size++;
 		q->capacity *= 2;
+		q->list[(q->start + q->size)%q->capacity] = val;
+		q->size++;
 	}
 }
 
@@ -94,9 +94,12 @@ int isEmptyQueue(struct queue* q){
 }
 
 int** popQueue(struct queue* q){
-	if(isEmptyQueue(q)) return NULL;
+	if(isEmptyQueue(q)){
+		return NULL;
+	}
 	int** output = q->list[q->start];
 	q->start = (q->start + 1)%q->capacity;
+	q->size--;
 	return output;
 }
 
@@ -531,10 +534,8 @@ int** solveSudoku(int** input){
 	// if((r = elimination(input, possibleGrid)) < 0) return input;
 	struct queue* q = malloc(sizeof(struct queue));
 	initQueue(q);
-	// printf("--------------------begin: %d, %d\n", q->start, q->size);
 	pushQueue(q,makeCopy(input));
 	int r_num, c_num, i;
-	// thread_count=1;
 	while(q->size < thread_count && !isEmptyQueue(q)){
 		int** curr = popQueue(q);
 		int break1=0;
@@ -548,23 +549,16 @@ int** solveSudoku(int** input){
 						pushQueue(q, curr_child);
 					}
 					break1 = 1;
-					// free(possible_vals.vals);
 					break;
 				}
 			}
 			if(break1) break;
 		}
-		// freeGrid(curr);
 	}
-	// printf("nthreads: %d\n", thread_count);
 	int** output;
 	omp_set_num_threads(thread_count);
 	#pragma omp parallel for 
 		for(i = 0; i < q->size; i++){
-			// printf("q->size: %d, thread_id: %d\n", q->size, omp_get_thread_num());
-			// printf("--------------------begin: %d, %d\n", q->start, q->size);
-			// printGrid(q->list[(i + q->start)%q->capacity]);
-			// printf("--------------------end:\n");
 			int** temp;
 			if(!output){
 				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity]);
@@ -574,6 +568,5 @@ int** solveSudoku(int** input){
 		}
 	if(!output) output = input;
 	return output;
-	// while(st.size < )
 	// return solveSudokuRec(input);
 }
