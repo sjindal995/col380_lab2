@@ -196,6 +196,9 @@ ll** getPossibleGrid(int** input){
 				// possible_vals = getPossibleValues(input, r_num, c_num);
 				pv = getPossibleValues(input, r_num, c_num);
 			}
+			else{
+				pv = (1<<(input[r_num][c_num] - 1));
+			}
 			// else{
 			// 	// possible_vals.vals[0] = input[r_num][c_num];
 			// 	// possible_vals.size++;
@@ -250,7 +253,7 @@ int updatePossibleGrid(int** input, int r_num, int c_num, ll** possibleGrid){
 			// possibleGrid[r_num][i].vals = up_vals1;
 			// possibleGrid[r_num][i].size = up_size1;
 			if(possibleGrid[r_num][i] == 0){
-				printf("1_1\n");
+				// printf("1_1\n");
 				return -1;
 			}
 		}
@@ -267,7 +270,7 @@ int updatePossibleGrid(int** input, int r_num, int c_num, ll** possibleGrid){
 			// possibleGrid[i][c_num].vals = up_vals2;
 			// possibleGrid[i][c_num].size = up_size2;
 			if(possibleGrid[i][c_num] == 0){
-				printf("2_1\n");
+				// printf("2_1\n");
 				return -1;
 			}
 		}
@@ -293,7 +296,7 @@ int updatePossibleGrid(int** input, int r_num, int c_num, ll** possibleGrid){
 				// possibleGrid[i][j].vals = up_vals0;
 				// possibleGrid[i][j].size = up_size0;
 				if(possibleGrid[i][j] == 0){
-					printf("3_1\n");
+					// printf("3_1\n");
 					return -1;
 				}
 			}
@@ -383,7 +386,7 @@ int loneRanger(int** input){
 	ll** possibleGrid = getPossibleGrid(input);
 	while(changed){
 		changed=0;
-		printf("entry\n");
+		// printf("entry\n");
 		for(r=0; r<SIZE; r++){
 			for(c=0; c<SIZE; c++){
 				if(input[r][c]==0){
@@ -392,17 +395,17 @@ int loneRanger(int** input){
 					res = isPower2(pv1);
 					if(pv1==0){
 						//incorrect input
-						printf("1\n");
+						// printf("1\n");
 						freePossibleGrid(possibleGrid);
 						return -1;
 					}
 					else if (res > 0){
-						printf("res: %lld, %d, %d, %d\n", pv1, r, c, res);
-						printGrid(input);
+						// printf("res: %lld, %d, %d, %d\n", pv1, r, c, res);
+						// printGrid(input);
 						input[r][c]=res;
 						changed=1;
 						if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-							printf("2\n");
+							// printf("2\n");
 							freePossibleGrid(possibleGrid);
 							return -1;
 						}
@@ -424,7 +427,7 @@ int loneRanger(int** input){
 									// pv2 = getPossibleValues(input,r,i);
 									pv2 = possibleGrid[r][i];
 									if(pv2 == 0){
-										printf("3\n");
+										// printf("3\n");
 										freePossibleGrid(possibleGrid);
 										return -1;
 									}
@@ -443,7 +446,7 @@ int loneRanger(int** input){
 									// pv2 = getPossibleValues(input,i, c);
 									pv2 = possibleGrid[i][c];
 									if(pv2 == 0){
-										printf("4\n");
+										// printf("4\n");
 										freePossibleGrid(possibleGrid);
 										return -1;
 									}
@@ -466,7 +469,7 @@ int loneRanger(int** input){
 										// pv2 = getPossibleValues(input, mini_row+i, mini_column+j);
 										pv2 = possibleGrid[mini_row+i][mini_column+j];
 										if(pv2 == 0){
-											printf("5\n");
+											// printf("5\n");
 											freePossibleGrid(possibleGrid);
 											return -1;
 										}
@@ -509,14 +512,14 @@ int loneRanger(int** input){
 						// }
 						int res_dummy = isPower2(pv1);
 						if(res_dummy == -1){
-							printf("7\n");
+							// printf("7\n");
 							freePossibleGrid(possibleGrid);
 							return -1;
 						}
 						else if(res_dummy > 0){
 							input[r][c] = res_dummy;
 							if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-								printf("6\n");
+								// printf("6\n");
 								freePossibleGrid(possibleGrid);
 								return -1;
 							}
@@ -528,7 +531,7 @@ int loneRanger(int** input){
 			}
 		}
 	}
-	printf("8\n");
+	// printf("8\n");
 	freePossibleGrid(possibleGrid);
 	return 0;
 }
@@ -650,7 +653,8 @@ int** solveSudoku(int** input){
 	initQueue(q);
 	pushQueue(q,makeCopy(input));
 	int r_num, c_num, i;
-	if(thread_count > 4) thread_count = 4;
+	// if(thread_count > 4) thread_count = 4;
+	thread_count = 1;
 	while(q->size < thread_count && !isEmptyQueue(q)){
 		int** curr = popQueue(q);
 		int break1=0;
