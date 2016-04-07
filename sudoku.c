@@ -234,7 +234,7 @@ int updatePossibleGrid(int** input, int r_num, int c_num, ll** possibleGrid){
 	return 0;
 }
 
-int elimination(int** input){
+int elimination(int** input, ll** possibleGrid){
 	int r_num, c_num, r;
 	int changed = 1;
 	while(changed){
@@ -242,7 +242,7 @@ int elimination(int** input){
 		for(r_num = 0; r_num < SIZE; r_num++){
 			for(c_num = 0; c_num < SIZE; c_num++){
 				if(input[r_num][c_num] == 0){
-					ll possible_vals = getPossibleValues(input, r_num, c_num);
+					ll possible_vals = possibleGrid[r_num][c_num];
 					if(possible_vals == 0){
 						return -1;
 					}
@@ -250,6 +250,9 @@ int elimination(int** input){
 					if(p2>0){
 						changed = 1;
 						input[r_num][c_num] = p2;
+						if(updatePossibleGrid(input,r_num,c_num,possibleGrid)<0){
+							return -1;
+						}
 					}
 				}
 			}
@@ -285,12 +288,12 @@ void freeGrid(int** grid){
 	free(grid);
 }
 
-int loneRanger(int** input){
+int loneRanger(int** input, ll** possibleGrid){
 	int r, c,i, j, mini_row, mini_column, k, noset, set,changed=1;
 	int res;
 	ll pv1,pv2;
 	int *bool_vals;
-	ll** possibleGrid = getPossibleGrid(input);
+	// ll** possibleGrid = getPossibleGrid(input);
 	while(changed){
 		changed=0;
 		for(r=0; r<SIZE; r++){
@@ -299,14 +302,12 @@ int loneRanger(int** input){
 					pv1 = possibleGrid[r][c];
 					res = isPower2(pv1);
 					if(pv1==0){
-						freePossibleGrid(possibleGrid);
 						return -1;
 					}
 					else if (res > 0){
 						input[r][c]=res;
 						changed=1;
 						if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-							freePossibleGrid(possibleGrid);
 							return -1;
 						}
 					}
@@ -321,7 +322,6 @@ int loneRanger(int** input){
 								if(input[r][i]==0){
 									pv2 = possibleGrid[r][i];
 									if(pv2 == 0){
-										freePossibleGrid(possibleGrid);
 										return -1;
 									}
 									else{
@@ -334,7 +334,6 @@ int loneRanger(int** input){
 								if(input[i][c]==0){
 									pv2 = possibleGrid[i][c];
 									if(pv2 == 0){
-										freePossibleGrid(possibleGrid);
 										return -1;
 									}
 									else{
@@ -351,7 +350,6 @@ int loneRanger(int** input){
 									if(input[mini_row+i][mini_column+j]==0){
 										pv2 = possibleGrid[mini_row+i][mini_column+j];
 										if(pv2 == 0){
-											freePossibleGrid(possibleGrid);
 											return -1;
 										}
 										else{
@@ -363,13 +361,11 @@ int loneRanger(int** input){
 						}
 						int res_dummy = isPower2(pv1);
 						if(res_dummy == -1){
-							freePossibleGrid(possibleGrid);
 							return -1;
 						}
 						else if(res_dummy > 0){
 							input[r][c] = res_dummy;
 							if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-								freePossibleGrid(possibleGrid);
 								return -1;
 							}
 						}
@@ -379,12 +375,11 @@ int loneRanger(int** input){
 			}
 		}
 	}
-	freePossibleGrid(possibleGrid);
 	return 0;
 }
 
 
-int** solveSudokuRec(int** input){
+int** solveSudokuRec(int** input, ll** possibleGrid){
 	if(isComplete(input)) return input;
 	int r_num;
 	int c_num;
@@ -396,28 +391,53 @@ int** solveSudokuRec(int** input){
 			input1[r_num][c_num] = input[r_num][c_num];
 		}
 	}
-	// r = loneRanger(input1);
-	r = elimination(input1);
+	ll** possibleGrid1 = malloc(SIZE*sizeof(ll*));
+	for(r_num = 0; r_num < SIZE; r_num++){
+		possibleGrid1[r_num] = malloc(SIZE*sizeof(ll));
+		for(c_num = 0; c_num < SIZE; c_num++){
+			possibleGrid1[r_num][c_num] = possibleGrid[r_num][c_num];
+		}
+	}
+	// r = loneRanger(input1, possibleGrid1);
+	r = elimination(input1, possibleGrid1);
 	if(r < 0){
 		freeGrid(input1);
+		freePossibleGrid(possibleGrid1);
 		return input;
 	}
 	else{
 		if(isComplete(input1)){
+			freePossibleGrid(possibleGrid1);
 			return input1;
 		}
 	}
 	for(r_num = 0; r_num < SIZE; r_num++){
 		for(c_num = 0; c_num < SIZE; c_num++){
 			if(input1[r_num][c_num] == 0){
-				ll possible_vals = getPossibleValues(input1, r_num, c_num);
+				// ll possible_vals = getPossibleValues(input1, r_num, c_num);
+				ll possible_vals = possibleGrid1[r_num][c_num];
 				int i;
 				int** output;
 				for(i=0; i<SIZE; i++){
 					if(possible_vals&(1<<i)){
 						input1[r_num][c_num] = i+1;
-						output = solveSudokuRec(input1);
+						ll** possibleGrid2 = malloc(SIZE*sizeof(ll*));
+						int r_num0, c_num0;
+						for(r_num0 = 0; r_num0 < SIZE; r_num0++){
+							possibleGrid2[r_num0] = malloc(SIZE*sizeof(ll));
+							for(c_num0 = 0; c_num0 < SIZE; c_num0++){
+								possibleGrid2[r_num0][c_num0] = possibleGrid2[r_num0][c_num0];
+							}
+						}
+						if((r = updatePossibleGrid(input1, r_num, c_num, possibleGrid2)) < 0){
+							freePossibleGrid(possibleGrid1);
+							freePossibleGrid(possibleGrid2);
+							return input;
+						}
+						output = solveSudokuRec(input1, possibleGrid2);
+						freePossibleGrid(possibleGrid2);
 						if(isValid(input, output)){
+							freePossibleGrid(possibleGrid1);
 							return output;
 						}
 						else{
@@ -425,11 +445,13 @@ int** solveSudokuRec(int** input){
 						}
 					}
 				}
+				freePossibleGrid(possibleGrid1);
 				freeGrid(input1);
 				return input;
 			}
 		}
 	}
+	freePossibleGrid(possibleGrid1);
 	freeGrid(input1);
 	return input;
 }
@@ -495,7 +517,8 @@ int** solveSudoku(int** input){
 		for(i = 0; i < q->size; i++){
 			int** temp;
 			if(!output){
-				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity]);
+				ll** possibleGrid = getPossibleGrid(q->list[(i + q->start)%q->capacity]);
+				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity], possibleGrid);
 				#pragma omp critical
 					if(isValid(input, temp)) output = temp;
 			}
