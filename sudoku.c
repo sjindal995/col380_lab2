@@ -1,3 +1,4 @@
+/*2013CS10253_2013CS10245*/
 #include <omp.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,7 @@ int** pop(struct stack* s){
 }
 
 int** top(struct stack* s){
+	if(isEmptyStack(s)) return NULL;
 	return s->list[s->size - 1];
 }
 
@@ -104,6 +106,7 @@ int** popQueue(struct queue* q){
 }
 
 int** frontQueue(struct queue* q){
+	if(isEmptyQueue(q)) return NULL;
 	return (q->list[q->start]);	
 }
 
@@ -384,10 +387,15 @@ int loneRanger(int** input){
 							// possibleGrid[r][c].vals[0]=set;
 							// possibleGrid[r][c].size=1;
 						}
+						else if(noset > 1){
+							return -1;
+						}
 						// if(updatePossibleGrid(input, r, c, possibleGrid)<0){
 						// 	return -1;
 						// }
+						free(bool_vals);
 					}
+					free(pv1.vals);
 				}
 			}
 		}
@@ -439,8 +447,8 @@ int** solveSudokuRec(int** input){
 			input1[r_num][c_num] = input[r_num][c_num];
 		}
 	}
-	r = elimination(input1);
-	// r = loneRanger(input1);
+	// r = elimination(input1);
+	r = loneRanger(input1);
 	if(r < 0){
 		// freePossibleGrid(possibleGrid);
 		freeGrid(input1);
@@ -536,6 +544,7 @@ int** solveSudoku(int** input){
 	initQueue(q);
 	pushQueue(q,makeCopy(input));
 	int r_num, c_num, i;
+	if(thread_count > 4) thread_count = 4;
 	while(q->size < thread_count && !isEmptyQueue(q)){
 		int** curr = popQueue(q);
 		int break1=0;
