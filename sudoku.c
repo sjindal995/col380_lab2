@@ -163,12 +163,12 @@ struct possibleVals** getPossibleGrid(int** input){
 		output[r_num] = malloc(SIZE*sizeof(struct possibleVals));
 		for(c_num = 0; c_num < SIZE; c_num++){
 			struct possibleVals possible_vals;
-			possible_vals.vals = calloc(SIZE, sizeof(int));
-			possible_vals.size = 0;
 			if(input[r_num][c_num]  == 0){
 				possible_vals = getPossibleValues(input, r_num, c_num);
 			}
 			else{
+				possible_vals.vals = calloc(SIZE, sizeof(int));
+				possible_vals.size = 0;
 				possible_vals.vals[0] = input[r_num][c_num];
 				possible_vals.size++;
 			}
@@ -267,6 +267,35 @@ int updatePossibleGrid(int** input, int r_num, int c_num, struct possibleVals** 
 	return 0;
 }
 
+int isComplete(int** input){
+	int r_num, c_num;
+	for(r_num = 0; r_num < SIZE; r_num++){
+		for(c_num = 0; c_num < SIZE; c_num++){
+			if(input[r_num][c_num] == 0) return 0;
+		}
+	}
+	return 1;
+}
+
+void freePossibleGrid(struct possibleVals** possibleGrid){
+	int r_num, c_num, i;
+	for(r_num = 0; r_num < SIZE; r_num++){
+		for(c_num = 0; c_num < SIZE; c_num++){
+			free(possibleGrid[r_num][c_num].vals);
+		}
+		free(possibleGrid[r_num]);
+	}
+	free(possibleGrid);
+}
+
+void freeGrid(int** grid){
+	int r_num, c_num, i;
+	for(r_num = 0; r_num < SIZE; r_num++){
+		free(grid[r_num]);
+	}
+	free(grid);
+}
+
 int elimination(int** input){
 	int r_num, c_num, r;
 	int changed = 1;
@@ -304,22 +333,26 @@ int loneRanger(int** input){
 	int r, c,i, j, mini_row, mini_column, k, noset, set,changed=1;
 	struct possibleVals pv1,pv2;
 	int *bool_vals;
+	struct possibleVals** possibleGrid = getPossibleGrid(input);
 	while(changed){
 		changed=0;
 		for(r=0; r<SIZE; r++){
 			for(c=0; c<SIZE; c++){
 				if(input[r][c]==0){
-					pv1 = getPossibleValues(input,r,c);
+					// pv1 = getPossibleValues(input,r,c);
+					pv1 = possibleGrid[r][c];
 					if(pv1.size==0){
 						//incorrect input
+						freePossibleGrid(possibleGrid);
 						return -1;
 					}
 					else if (pv1.size==1){
 						input[r][c]=pv1.vals[0];
 						changed=1;
-						// if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-							// return -1;
-						// }
+						if(updatePossibleGrid(input,r,c,possibleGrid)<0){
+							freePossibleGrid(possibleGrid);
+							return -1;
+						}
 					}
 					else if (pv1.size>1){
 						bool_vals = calloc(SIZE,sizeof(int));
@@ -331,27 +364,35 @@ int loneRanger(int** input){
 							//row
 							if(i!=c){
 								if(input[r][i]==0){
-									pv2 = getPossibleValues(input,r,i);
-									if(pv2.size>0){
+									// pv2 = getPossibleValues(input,r,i);
+									pv2 = possibleGrid[r][i];
+									if(pv2.size == 0){
+										freePossibleGrid(possibleGrid);
+										return -1;
+									}
+									else if(pv2.size>0){
 										for(j=0; j<pv2.size;j++){
 											bool_vals[pv2.vals[j]-1]=0;
 										}
 									}
-									free(pv2.vals);
-									// free(pv2);
+									// free(pv2.vals);
 								}	
 							}
 							//column
 							if(i!=r){
 								if(input[i][c]==0){
-									pv2 = getPossibleValues(input,i, c);
-									if(pv2.size>0){
+									// pv2 = getPossibleValues(input,i, c);
+									pv2 = possibleGrid[i][c];
+									if(pv2.size == 0){
+										freePossibleGrid(possibleGrid);
+										return -1;
+									}
+									else if(pv2.size>0){
 										for(j=0;j<pv2.size;j++){
 											bool_vals[pv2.vals[j]-1]=0;
 										}
 									}
-									free(pv2.vals);
-									// free(pv2);
+									// free(pv2.vals);
 								}
 							}
 						}
@@ -361,15 +402,18 @@ int loneRanger(int** input){
 							for(j=0; j<MINIGRIDSIZE; j++){
 								if(i!=r && j!=c){
 									if(input[mini_row+i][mini_column+j]!=0){
-										pv2 = getPossibleValues(input, mini_row+i, mini_column+j);
-										if(pv2.size>0){
+										// pv2 = getPossibleValues(input, mini_row+i, mini_column+j);
+										pv2 = possibleGrid[mini_row+i][mini_column+j];
+										if(pv2.size == 0){
+											freePossibleGrid(possibleGrid);
+											return -1;
+										}
+										else if(pv2.size>0){
 											for(k=0;k<pv2.size; k++){
 												bool_vals[pv2.vals[k]-1]=0;
 											}
 										}
-										free(pv2.vals);
-										// free(pv2);
-
+										// free(pv2.vals);
 									}
 								}
 							}
@@ -384,53 +428,31 @@ int loneRanger(int** input){
 						if(noset==1){
 							input[r][c]=set;
 							changed=1;
+							if(updatePossibleGrid(input,r,c,possibleGrid)<0){
+								freePossibleGrid(possibleGrid);
+								return -1;
+							}
 							// possibleGrid[r][c].vals[0]=set;
 							// possibleGrid[r][c].size=1;
 						}
 						else if(noset > 1){
+							freePossibleGrid(possibleGrid);
 							return -1;
 						}
 						// if(updatePossibleGrid(input, r, c, possibleGrid)<0){
-						// 	return -1;
+						// return -1;
 						// }
 						free(bool_vals);
 					}
-					free(pv1.vals);
+					// free(pv1.vals);
 				}
 			}
 		}
 	}
+	freePossibleGrid(possibleGrid);
 	return 0;
 }
 
-int isComplete(int** input){
-	int r_num, c_num;
-	for(r_num = 0; r_num < SIZE; r_num++){
-		for(c_num = 0; c_num < SIZE; c_num++){
-			if(input[r_num][c_num] == 0) return 0;
-		}
-	}
-	return 1;
-}
-
-void freePossibleGrid(struct possibleVals** possibleGrid){
-	int r_num, c_num, i;
-	for(r_num = 0; r_num < SIZE; r_num++){
-		for(c_num = 0; c_num < SIZE; c_num++){
-			free(possibleGrid[r_num][c_num].vals);
-		}
-		free(possibleGrid[r_num]);
-	}
-	free(possibleGrid);
-}
-
-void freeGrid(int** grid){
-	int r_num, c_num, i;
-	for(r_num = 0; r_num < SIZE; r_num++){
-		free(grid[r_num]);
-	}
-	free(grid);
-}
 
 int** solveSudokuRec(int** input){
 	if(isComplete(input)) return input;
