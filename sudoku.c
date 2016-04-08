@@ -88,7 +88,7 @@ struct queue{
 void initQueue(struct queue* q){
 	q->start = 0;
 	q->size = 0;
-	q->capacity = 1;
+	q->capacity = 7;
 	q->list = malloc(q->capacity*sizeof(int**));
 }
 
