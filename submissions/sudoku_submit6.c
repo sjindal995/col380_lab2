@@ -397,8 +397,8 @@ int** solveSudokuRec(int** input){
 			input1[r_num][c_num] = input[r_num][c_num];
 		}
 	}
-	r = loneRanger(input1);
-	// r = elimination(input1);
+	// r = loneRanger(input1);
+	r = elimination(input1);
 	if(r < 0){
 		freeGrid(input1);
 		return input;
