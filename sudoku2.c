@@ -22,6 +22,8 @@ typedef ll PG[SIZE][SIZE];
 typedef struct Pgrid{
 	PG pg;
 } pgrid;
+
+ll offset;
 //ith bit is set, means (i+1) is a possible value at that position
 
 extern int thread_count;
@@ -125,7 +127,8 @@ int isValid2(grid* original, grid* solution){
 				}
 		}
 	}
-	found_correct=1;
+	#pragma omp critical
+		found_correct=1;
 	return 1;
 }
 
@@ -205,14 +208,14 @@ ll getPossibleValues(grid* input, int row, int column){
 	int i;
 	ll res = 0;
 	for(i = 0; i < SIZE;i++){
-		res |= (1<<i);
+		res |= ((offset)<<i);
 	}
 	for(i = 0; i < SIZE; i++){
 		if(input->g[row][i] != 0){
-			res &= ~(1<<(input->g[row][i]-1));
+			res &= ~((offset)<<(input->g[row][i]-1));
 		}
 		if(input->g[i][column] != 0){
-			res &= ~(1<<(input->g[i][column] - 1));
+			res &= ~((offset)<<(input->g[i][column] - 1));
 		}
 	}
 	int j;
@@ -221,7 +224,7 @@ ll getPossibleValues(grid* input, int row, int column){
 	for(i = 0; i < MINIGRIDSIZE; i++){
 		for(j = 0; j < MINIGRIDSIZE; j++){
 			if(input->g[mini_row + i][mini_column + j] != 0){
-				res &= ~(1<<(input->g[mini_row+i][mini_column+j] - 1));
+				res &= ~((offset)<<(input->g[mini_row+i][mini_column+j] - 1));
 			}
 		}
 	}
@@ -241,7 +244,7 @@ pgrid getPossibleGrid(grid* input){
 				pv = getPossibleValues(input, r_num, c_num);
 			}
 			else{
-				pv |= (1<<(input->g[r_num][c_num] - 1));
+				pv |= ((offset)<<(input->g[r_num][c_num] - 1));
 			}
 			output.pg[r_num][c_num] = pv;
 		}
@@ -264,7 +267,7 @@ void printPossibleGrid(pgrid* possible_vals){
 		for (j=0;j<SIZE;j++){
 			printf(":: [");
 			for(k = 0; k<SIZE; k++){
-				if(possible_vals->pg[i][j]&(1<<k))
+				if(possible_vals->pg[i][j]&((offset)<<k))
 					printf("%d ",k+1);
 			}
 			printf("] ");
@@ -278,13 +281,13 @@ int updatePossibleGrid(grid* input, int r_num, int c_num, pgrid* possibleGrid){
 	int i,j;
 	for(i = 0; i<SIZE; i++){
 		if(i != c_num){
-			possibleGrid->pg[r_num][i] &= ~(1<<(input->g[r_num][c_num]-1));  
+			possibleGrid->pg[r_num][i] &= ~((offset)<<(input->g[r_num][c_num]-1));  
 			if(possibleGrid->pg[r_num][i] == 0){
 				return -1;
 			}
 		}
 		if(i != r_num){
-			possibleGrid->pg[i][c_num] &= ~(1<<(input->g[r_num][c_num] - 1));
+			possibleGrid->pg[i][c_num] &= ~((offset)<<(input->g[r_num][c_num] - 1));
 			if(possibleGrid->pg[i][c_num] == 0){
 				return -1;
 			}
@@ -297,7 +300,7 @@ int updatePossibleGrid(grid* input, int r_num, int c_num, pgrid* possibleGrid){
 		for(j = mini_column; j < MINIGRIDSIZE+mini_column; j++){
 			int up_size0 = 0;
 			if((i != r_num) && (j != c_num)){
-				possibleGrid->pg[i][j] &= ~(1<<(input->g[r_num][c_num] - 1));
+				possibleGrid->pg[i][j] &= ~((offset)<<(input->g[r_num][c_num] - 1));
 				if(possibleGrid->pg[i][j] == 0){
 					return -1;
 				}
@@ -369,14 +372,15 @@ int loneRanger(grid* input){
 	int res;
 	ll pv1,pv2;
 	// int *bool_vals;
+	pgrid possibleGrid = getPossibleGrid(input);
 	// ll** possibleGrid = getPossibleGrid(input);
 	while(changed){
 		changed=0;
 		for(r=0; r<SIZE; r++){
 			for(c=0; c<SIZE; c++){
 				if(input->g[r][c]==0){
-					// pv1 = possibleGrid->pg[r][c];
-					pv1 = getPossibleValues(input,r,c);
+					pv1 = possibleGrid.pg[r][c];
+					// pv1 = getPossibleValues(input,r,c);
 					res = isPower2(pv1);
 					if(pv1==0){
 						return -1;
@@ -384,21 +388,21 @@ int loneRanger(grid* input){
 					else if (res > 0){
 						input->g[r][c]=res;
 						changed=1;
-						// if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-						// 	return -1;
-						// }
+						if(updatePossibleGrid(input,r,c,&possibleGrid)<0){
+							return -1;
+						}
 					}
 					else{
 						// bool_vals = calloc(SIZE,sizeof(int));
 						// for(i = 0; i<SIZE; i++){
-						// 	if(pv1&(1<<i)) bool_vals[i]=1;
+						// 	if(pv1&((offset)<<i)) bool_vals[i]=1;
 						// }
 						for(i=0;i<SIZE;i++){
 							//row
 							if(i!=c){
 								if(input->g[r][i]==0){
-									// pv2 = possibleGrid->pg[r][i];
-									pv2 = getPossibleValues(input,r,i);
+									pv2 = possibleGrid.pg[r][i];
+									// pv2 = getPossibleValues(input,r,i);
 									if(pv2 == 0){
 										return -1;
 									}
@@ -410,8 +414,8 @@ int loneRanger(grid* input){
 							//column
 							if(i!=r){
 								if(input->g[i][c]==0){
-									// pv2 = possibleGrid->pg[i][c];
-									pv2 = getPossibleValues(input,i,c);
+									pv2 = possibleGrid.pg[i][c];
+									// pv2 = getPossibleValues(input,i,c);
 									if(pv2 == 0){
 										return -1;
 									}
@@ -427,8 +431,8 @@ int loneRanger(grid* input){
 							for(j=0; j<MINIGRIDSIZE; j++){
 								if(i!=r && j!=c){
 									if(input->g[mini_row+i][mini_column+j]==0){
-										// pv2 = possibleGrid->pg[mini_row+i][mini_column+j];
-										pv2 = getPossibleValues(input,mini_row+i,mini_column+j);
+										pv2 = possibleGrid.pg[mini_row+i][mini_column+j];
+										// pv2 = getPossibleValues(input,mini_row+i,mini_column+j);
 										if(pv2 == 0){
 											return -1;
 										}
@@ -445,9 +449,9 @@ int loneRanger(grid* input){
 						}
 						else if(res_dummy > 0){
 							input->g[r][c] = res_dummy;
-							// if(updatePossibleGrid(input,r,c,possibleGrid)<0){
-							// 	return -1;
-							// }
+							if(updatePossibleGrid(input,r,c,&possibleGrid)<0){
+								return -1;
+							}
 						}
 						// free(bool_vals);
 					}
@@ -484,6 +488,8 @@ grid solveSudokuRec(grid input){
 	// r = loneRanger(input1, possibleGrid1);
 	// r = elimination(&input1, &possibleGrid1);
 	r = elimination(&input1);
+	// r = loneRanger(&input1);
+	int fc;
 	if(r < 0){
 		// freeGrid(input1);
 		// freePossibleGrid(possibleGrid1);
@@ -505,10 +511,12 @@ grid solveSudokuRec(grid input){
 				// int** output;
 				grid output;
 				for(i=0; i<SIZE; i++){
-					if(found_correct){ 
+					#pragma omp critical
+						fc = found_correct;
+					if(fc){ 
 						return input;
 					}
-					if(possible_vals&(1<<i)){
+					if(possible_vals&((offset)<<i)){
 						input1.g[r_num][c_num] = i+1;
 						// ll** possibleGrid2 = malloc(SIZE*sizeof(ll*));
 						// pgrid possibleGrid2=possibleGrid1;
@@ -576,6 +584,8 @@ grid solveSudokuRec(grid input){
 // }
 
 int** solveSudoku(int** inp){
+	if(SIZE<32) offset=1;
+	else offset=1LL;
 	struct queue* q = (struct queue*)malloc(sizeof(struct queue));
 	initQueue(q);
 	grid input;
@@ -592,6 +602,7 @@ int** solveSudoku(int** inp){
 	if(thread_count > 4) thread_count = 4;
 	// thread_count = 1;
 	// while(q->size < thread_count*SIZE && !isEmptyQueue(q)){
+	grid output;
 	while(q->size < 7 && !isEmptyQueue(q)){
 		// int** curr = popQueue(q);
 		grid curr = popQueue(q);
@@ -601,7 +612,7 @@ int** solveSudoku(int** inp){
 				if(curr.g[r_num][c_num] == 0){
 					ll possible_vals = getPossibleValues(&curr, r_num, c_num);
 					for(i = 0; i < SIZE; i++){
-						if(possible_vals&(1<<i)){
+						if(possible_vals&((1LL)<<i)){
 							// int** curr_child = makeCopy(curr);
 							grid curr_child = curr;
 							curr_child.g[r_num][c_num] = i+1;
@@ -614,15 +625,23 @@ int** solveSudoku(int** inp){
 			}
 			if(break1) break;
 		}
-		if(!break1 && isValid2(&input,&curr));
+		if(!break1 && isValid2(&input,&curr)){
+			output= curr;
+			q->size=0;
+			break;
+		}
 	}
 	// int** output;
-	grid output;
 	omp_set_num_threads(thread_count);
 	#pragma omp parallel for 
 		for(i = 0; i < q->size; i++){
 			grid temp;
-			if(!found_correct){
+			int fc;
+			#pragma omp critical
+			{
+				 fc = found_correct;
+			}
+			if(!fc){
 				// pgrid possibleGrid = getPossibleGrid(&(q->list[(i + q->start)%q->capacity]));
 				temp = solveSudokuRec(q->list[(i + q->start)%q->capacity]);
 				#pragma omp critical
