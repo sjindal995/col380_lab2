@@ -242,7 +242,8 @@ int elimination(int** input, ll** possibleGrid){
 		for(r_num = 0; r_num < SIZE; r_num++){
 			for(c_num = 0; c_num < SIZE; c_num++){
 				if(input[r_num][c_num] == 0){
-					ll possible_vals = possibleGrid[r_num][c_num];
+					// ll possible_vals = possibleGrid[r_num][c_num];
+					ll possible_vals = getPossibleValues(input, r_num, c_num);
 					if(possible_vals == 0){
 						return -1;
 					}
@@ -250,9 +251,9 @@ int elimination(int** input, ll** possibleGrid){
 					if(p2>0){
 						changed = 1;
 						input[r_num][c_num] = p2;
-						if(updatePossibleGrid(input,r_num,c_num,possibleGrid)<0){
-							return -1;
-						}
+						// if(updatePossibleGrid(input,r_num,c_num,possibleGrid)<0){
+						// 	return -1;
+						// }
 					}
 				}
 			}
@@ -414,8 +415,8 @@ int** solveSudokuRec(int** input, ll** possibleGrid){
 	for(r_num = 0; r_num < SIZE; r_num++){
 		for(c_num = 0; c_num < SIZE; c_num++){
 			if(input1[r_num][c_num] == 0){
-				// ll possible_vals = getPossibleValues(input1, r_num, c_num);
-				ll possible_vals = possibleGrid1[r_num][c_num];
+				ll possible_vals = getPossibleValues(input1, r_num, c_num);
+				// ll possible_vals = possibleGrid1[r_num][c_num];
 				int i;
 				int** output;
 				for(i=0; i<SIZE; i++){
@@ -429,11 +430,11 @@ int** solveSudokuRec(int** input, ll** possibleGrid){
 								possibleGrid2[r_num0][c_num0] = possibleGrid2[r_num0][c_num0];
 							}
 						}
-						if((r = updatePossibleGrid(input1, r_num, c_num, possibleGrid2)) < 0){
-							freePossibleGrid(possibleGrid1);
-							freePossibleGrid(possibleGrid2);
-							return input;
-						}
+						// if((r = updatePossibleGrid(input1, r_num, c_num, possibleGrid2)) < 0){
+						// 	freePossibleGrid(possibleGrid1);
+						// 	freePossibleGrid(possibleGrid2);
+						// 	return input;
+						// }
 						output = solveSudokuRec(input1, possibleGrid2);
 						freePossibleGrid(possibleGrid2);
 						if(isValid(input, output)){
